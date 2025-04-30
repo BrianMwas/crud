@@ -1,13 +1,14 @@
-version: '3.8'
+
 services:
   web:
     build: .
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/app
+      - .:/app
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/fastapi_db
+      - PYTHONPATH=/app
     depends_on:
       - db
     command: uvicorn app.main:app --host 0.0.0.0 --reload
