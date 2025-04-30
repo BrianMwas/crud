@@ -109,13 +109,38 @@ This project demonstrates how to implement machine-to-machine (M2M) authenticati
 
 ## Permission System
 
-The API implements a permission system that allows:
+The API implements a comprehensive permission system that demonstrates machine-to-machine (M2M) authentication with Auth0:
 
-1. Resource owners to access, update, and delete their own resources
-2. Auth0 M2M applications with the `read:resources` permission to read all resources
-3. Denies access to other users or applications without the right permissions
+### Resource Access Rules
 
-> **Note for Testing**: For testing purposes, the permission check for M2M applications has been temporarily modified to allow all M2M tokens. In a production environment, you should uncomment the permission check in `app/auth/verify.py` to ensure that only M2M applications with the appropriate permissions can access resources.
+1. **Resource Owners**:
+   - Can create, read, update, and delete their own resources
+   - Cannot access resources owned by other users
+
+2. **M2M Applications**:
+   - Can read all resources if they have the `read:resources` permission
+   - Cannot update or delete any resources (even with permissions)
+   - Authenticated using Auth0's client credentials flow
+
+3. **Other Users**:
+   - Cannot access resources they don't own
+
+### Implementation Details
+
+The permission system is implemented through two key functions:
+
+1. **`has_model_permission`**:
+   - Checks if a user has permission to access a specific resource
+   - Used for single resource operations (get, update, delete)
+   - Returns the resource if access is allowed, raises an HTTP exception otherwise
+
+2. **`check_resource_permissions`**:
+   - Returns a query that filters resources based on user permissions
+   - Used for listing resources
+   - M2M applications with proper permissions see all resources
+   - Regular users only see their own resources
+
+
 
 ## Documentation
 

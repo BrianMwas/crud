@@ -119,16 +119,15 @@ def has_model_permission(model_id: int, db: Session = Depends(get_db), token_pay
 
     # Check if this is an M2M token (client credentials flow)
     if "gty" in token_payload and token_payload["gty"] == "client-credentials":
-        # For testing purposes, allow all M2M tokens
-        # In production, you would check for specific permissions
-        # permissions = token_payload.get("permissions", [])
-        # if "read:resources" in permissions:
-        return resource
-        # else:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail="M2M application doesn't have required permissions"
-        #     )
+        # Verify if the M2M app has the required permissions
+        permissions = token_payload.get("permissions", [])
+        if "read:resources" in permissions:
+            return resource
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="M2M application doesn't have required permissions"
+            )
 
     # Check if user is the owner
     # The user ID is usually stored in the 'sub' claim
@@ -141,3 +140,32 @@ def has_model_permission(model_id: int, db: Session = Depends(get_db), token_pay
         status_code=status.HTTP_403_FORBIDDEN,
         detail="You don't have permission to access this resource"
     )
+
+def check_resource_permissions(db: Session, token_payload: dict):
+    """
+    Checks what resources the user has permission to access.
+    This function is similar to has_model_permission but returns a query instead of a resource instance.
+    It's used for listing resources rather than accessing a specific resource.
+
+    Args:
+        db: Database session
+        token_payload: The decoded JWT token payload
+
+    Returns:
+        A query that will return only the resources the user has permission to access
+    """
+    
+    # Check if this is an M2M token (client credentials flow)
+    if "gty" in token_payload and token_payload["gty"] == "client-credentials":
+        # Check if the M2M app has the required permissions
+        permissions = token_payload.get("permissions", [])
+        
+        if "read:resources" in permissions:
+            return db.query(Resource)
+        else:
+            # Return an empty query if the M2M app doesn't have the required permissions
+            return db.query(Resource).filter(Resource.id == -1)  # This will return no results
+
+    # Regular users can only see their own resources
+    user_id = token_payload.get("sub")
+    return db.query(Resource).filter(Resource.owner_id == user_id)
