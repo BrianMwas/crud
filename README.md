@@ -1,6 +1,6 @@
-# FastAPI Auth0 Machine-to-Machine Authentication
+# FastAPI Auth0 Machine-to-Machine Authentication with Resource Permissions
 
-This project demonstrates how to implement machine-to-machine (M2M) authentication with Auth0 in a FastAPI application.
+This project demonstrates how to implement machine-to-machine (M2M) authentication with Auth0 in a FastAPI application, along with a permission system that allows both resource owners and Auth0 M2M applications with specific permissions to access model instances.
 
 ## Setup
 
@@ -46,17 +46,61 @@ This project demonstrates how to implement machine-to-machine (M2M) authenticati
    uvicorn app.main:app --reload
    ```
 
-2. Test the Auth0 integration:
+2. Test the API functionality:
    ```
-   python test_auth0.py
+   python test_permissions.py
    ```
+
+## Project Structure
+
+```
+app/
+├── __init__.py
+├── main.py                  # FastAPI application entry point
+├── database.py              # Database configuration
+├── models.py                # SQLAlchemy models
+├── auth/                    # Authentication related code
+│   ├── __init__.py
+│   ├── config.py            # Auth0 configuration
+│   ├── token.py             # Token generation
+│   └── verify.py            # Token verification and permissions
+├── controllers/             # Business logic
+│   ├── __init__.py
+│   └── resource_controller.py
+├── routes/                  # API routes
+│   ├── __init__.py
+│   ├── auth_routes.py       # Authentication routes
+│   ├── base_routes.py       # Basic routes
+│   └── resource_routes.py   # Resource CRUD routes
+└── schemas/                 # Pydantic models for request/response
+    ├── __init__.py
+    └── resource.py
+```
 
 ## API Endpoints
 
-- `GET /`: Public endpoint
-- `GET /health`: Public health check endpoint
-- `GET /protected`: Protected endpoint that requires a valid Auth0 token
-- `GET /token`: Endpoint to get a machine-to-machine token from Auth0
+### Base Endpoints
+- `GET /`: Welcome message
+- `GET /health`: Health check endpoint
+
+### Authentication Endpoints
+- `GET /token`: Get a machine-to-machine token from Auth0
+- `GET /protected`: Protected route that requires a valid Auth0 token
+
+### Resource Endpoints
+- `POST /resources/`: Create a new resource
+- `GET /resources/`: List all resources the user has access to
+- `GET /resources/{resource_id}`: Get a specific resource by ID
+- `PUT /resources/{resource_id}`: Update a specific resource
+- `DELETE /resources/{resource_id}`: Delete a specific resource
+
+## Permission System
+
+The API implements a permission system that allows:
+
+1. Resource owners to access, update, and delete their own resources
+2. Auth0 M2M applications with the `read:resources` permission to read all resources
+3. Denies access to other users or applications without the right permissions
 
 ## Documentation
 
