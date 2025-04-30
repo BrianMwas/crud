@@ -11,7 +11,7 @@ class Auth0Config(BaseModel):
     api_audience: str = os.getenv("AUTH0_API_AUDIENCE", "")
     client_id: str = os.getenv("AUTH0_CLIENT_ID", "")
     client_secret: str = os.getenv("AUTH0_CLIENT_SECRET", "")
-    algorithms: list[str] = ["RS256"]
+    algorithms: list[str] = ["RS256"]  # Auth0 uses RS256 by default
 
 # Create a global instance of the config
 auth0_config = Auth0Config()
