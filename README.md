@@ -48,33 +48,46 @@ This project demonstrates how to implement machine-to-machine (M2M) authenticati
 
 2. Test the API functionality:
    ```
-   python test_permissions.py
+   python -m tests.run_tests
+   ```
+
+   Or run individual tests:
+   ```
+   python -m tests.test_auth
+   python -m tests.test_permissions
+   python -m tests.test_resource_controller
    ```
 
 ## Project Structure
 
 ```
-app/
-├── __init__.py
-├── main.py                  # FastAPI application entry point
-├── database.py              # Database configuration
-├── models.py                # SQLAlchemy models
-├── auth/                    # Authentication related code
+├── app/                     # Main application code
 │   ├── __init__.py
-│   ├── config.py            # Auth0 configuration
-│   ├── token.py             # Token generation
-│   └── verify.py            # Token verification and permissions
-├── controllers/             # Business logic
+│   ├── main.py              # FastAPI application entry point
+│   ├── database.py          # Database configuration
+│   ├── models.py            # SQLAlchemy models
+│   ├── auth/                # Authentication related code
+│   │   ├── __init__.py
+│   │   ├── config.py        # Auth0 configuration
+│   │   ├── token.py         # Token generation
+│   │   └── verify.py        # Token verification and permissions
+│   ├── controllers/         # Business logic
+│   │   ├── __init__.py
+│   │   └── resource_controller.py
+│   ├── routes/              # API routes
+│   │   ├── __init__.py
+│   │   ├── auth_routes.py   # Authentication routes
+│   │   ├── base_routes.py   # Basic routes
+│   │   └── resource_routes.py # Resource CRUD routes
+│   └── schemas/             # Pydantic models for request/response
+│       ├── __init__.py
+│       └── resource.py
+├── tests/                   # Test files
 │   ├── __init__.py
-│   └── resource_controller.py
-├── routes/                  # API routes
-│   ├── __init__.py
-│   ├── auth_routes.py       # Authentication routes
-│   ├── base_routes.py       # Basic routes
-│   └── resource_routes.py   # Resource CRUD routes
-└── schemas/                 # Pydantic models for request/response
-    ├── __init__.py
-    └── resource.py
+│   ├── run_tests.py         # Main test runner
+│   ├── test_auth.py         # Authentication tests
+│   ├── test_permissions.py  # Permission system tests
+│   └── test_resource_controller.py # Resource controller tests
 ```
 
 ## API Endpoints
@@ -101,6 +114,8 @@ The API implements a permission system that allows:
 1. Resource owners to access, update, and delete their own resources
 2. Auth0 M2M applications with the `read:resources` permission to read all resources
 3. Denies access to other users or applications without the right permissions
+
+> **Note for Testing**: For testing purposes, the permission check for M2M applications has been temporarily modified to allow all M2M tokens. In a production environment, you should uncomment the permission check in `app/auth/verify.py` to ensure that only M2M applications with the appropriate permissions can access resources.
 
 ## Documentation
 

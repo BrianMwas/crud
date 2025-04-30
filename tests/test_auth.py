@@ -46,22 +46,45 @@ async def test_protected_endpoint(token):
         print(f"Status code: {response.status_code}")
         print(f"Response: {response.text}")
 
-async def main():
-    print("Testing Auth0 machine-to-machine authentication...")
+async def test_token_endpoint():
+    """Test the token endpoint of our API."""
+    url = "http://localhost:8000/token"
     
-    # Get token
-    print("\nGetting token from Auth0...")
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+        print(f"Status code: {response.status_code}")
+        if response.status_code == 200:
+            data = response.json()
+            print(f"Token received: {data.get('token')[:20]}...")
+            return data.get('token')
+        else:
+            print(f"Failed to get token: {response.text}")
+            return None
+
+async def main():
+    print("Testing Auth0 authentication...")
+    
+    # Test 1: Get token directly from Auth0
+    print("\n1. Getting token directly from Auth0...")
     token_data = await get_token()
     
     if not token_data:
-        print("Failed to get token. Please check your Auth0 credentials.")
-        return
+        print("❌ Failed to get token from Auth0. Please check your Auth0 credentials.")
+    else:
+        print(f"✅ Token received from Auth0: {token_data.get('access_token')[:20]}...")
+        
+        # Test protected endpoint with Auth0 token
+        print("\n2. Testing protected endpoint with Auth0 token...")
+        await test_protected_endpoint(token_data.get("access_token"))
     
-    print(f"Token received: {token_data.get('access_token')[:20]}...")
+    # Test 2: Get token from our API
+    print("\n3. Getting token from our API...")
+    api_token = await test_token_endpoint()
     
-    # Test protected endpoint
-    print("\nTesting protected endpoint...")
-    await test_protected_endpoint(token_data.get("access_token"))
+    if api_token:
+        # Test protected endpoint with API token
+        print("\n4. Testing protected endpoint with API token...")
+        await test_protected_endpoint(api_token)
 
 if __name__ == "__main__":
     asyncio.run(main())
