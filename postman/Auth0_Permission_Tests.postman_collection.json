@@ -1,0 +1,692 @@
+{
+	"info": {
+		"_postman_id": "12345678-1234-1234-1234-123456789012",
+		"name": "Auth0 Permission Tests",
+		"description": "Tests for Auth0 permission scenarios",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Login as User 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Token is returned\", function () {",
+									"    pm.expect(jsonData).to.have.property('token');",
+									"    pm.environment.set('user1_token', jsonData.token);",
+									"    pm.environment.set('user1_id', jsonData.user_id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"user1@example.com\",\n    \"password\": \"User1Password!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						},
+						"description": "Login as User 1 to get a token"
+					},
+					"response": []
+				},
+				{
+					"name": "Login as User 2",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Token is returned\", function () {",
+									"    pm.expect(jsonData).to.have.property('token');",
+									"    pm.environment.set('user2_token', jsonData.token);",
+									"    pm.environment.set('user2_id', jsonData.user_id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"user2@example.com\",\n    \"password\": \"User2Password!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"login"
+							]
+						},
+						"description": "Login as User 2 to get a token"
+					},
+					"response": []
+				},
+				{
+					"name": "Get M2M Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Token is returned\", function () {",
+									"    pm.expect(jsonData).to.have.property('token');",
+									"    pm.environment.set('m2m_token', jsonData.token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/token",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"token"
+							]
+						},
+						"description": "Get a machine-to-machine token"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints to get tokens"
+		},
+		{
+			"name": "2. Resource Creation",
+			"item": [
+				{
+					"name": "Create Resource A (User 1)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Resource is created\", function () {",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.environment.set('resource_a_id', jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user1_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Resource A\",\n    \"description\": \"This resource is owned by User 1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/resources/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"resources",
+								""
+							]
+						},
+						"description": "Create Resource A owned by User 1"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Resource B (User 2)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Resource is created\", function () {",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.environment.set('resource_b_id', jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user2_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Resource B\",\n    \"description\": \"This resource is owned by User 2\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/resources/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"resources",
+								""
+							]
+						},
+						"description": "Create Resource B owned by User 2"
+					},
+					"response": []
+				},
+				{
+					"name": "Create Document C (User 1)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Document is created\", function () {",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.environment.set('document_c_id', jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user1_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"title\": \"Document C\",\n    \"content\": \"This is a document for testing permissions\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/documents/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"documents",
+								""
+							]
+						},
+						"description": "Create Document C owned by User 1"
+					},
+					"response": []
+				}
+			],
+			"description": "Create test resources for permission testing"
+		},
+		{
+			"name": "3. Permission Tests",
+			"item": [
+				{
+					"name": "Scenario A: User 1 accesses Resource A",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Resource details are returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData.name).to.eql('Resource A');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user1_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/resources/{{resource_a_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"resources",
+								"{{resource_a_id}}"
+							]
+						},
+						"description": "User 1 accesses Resource A (which they own)"
+					},
+					"response": []
+				},
+				{
+					"name": "Scenario B: User 1 tries to access Resource B",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Access is denied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user1_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/resources/{{resource_b_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"resources",
+								"{{resource_b_id}}"
+							]
+						},
+						"description": "User 1 tries to access Resource B (owned by User 2)"
+					},
+					"response": []
+				},
+				{
+					"name": "Scenario C1: M2M accesses Resource A",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Resource details are returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData.name).to.eql('Resource A');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{m2m_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/resources/{{resource_a_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"resources",
+								"{{resource_a_id}}"
+							]
+						},
+						"description": "M2M token accesses Resource A"
+					},
+					"response": []
+				},
+				{
+					"name": "Scenario C2: M2M accesses Resource B",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Resource details are returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData.name).to.eql('Resource B');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{m2m_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/resources/{{resource_b_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"resources",
+								"{{resource_b_id}}"
+							]
+						},
+						"description": "M2M token accesses Resource B"
+					},
+					"response": []
+				},
+				{
+					"name": "Scenario D: M2M tries to access Document C",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 403\", function () {",
+									"    pm.response.to.have.status(403);",
+									"});",
+									"",
+									"pm.test(\"Access is denied\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{m2m_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/documents/{{document_c_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"documents",
+								"{{document_c_id}}"
+							]
+						},
+						"description": "M2M token tries to access Document C (different model class)"
+					},
+					"response": []
+				}
+			],
+			"description": "Test the permission scenarios"
+		},
+		{
+			"name": "4. Cleanup",
+			"item": [
+				{
+					"name": "Delete Resource A",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user1_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/resources/{{resource_a_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"resources",
+								"{{resource_a_id}}"
+							]
+						},
+						"description": "Delete Resource A"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Resource B",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user2_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/resources/{{resource_b_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"resources",
+								"{{resource_b_id}}"
+							]
+						},
+						"description": "Delete Resource B"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Document C",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{user1_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/documents/{{document_c_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"documents",
+								"{{document_c_id}}"
+							]
+						},
+						"description": "Delete Document C"
+					},
+					"response": []
+				}
+			],
+			"description": "Clean up test resources"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	]
+}

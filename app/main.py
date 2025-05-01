@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from . import models, database
-from .routes import base_routes, auth_routes, resource_routes
+from .routes import base_routes, auth_routes, resource_routes, document_routes
 
 # Create database tables
 models.Base.metadata.create_all(bind=database.engine)
@@ -20,3 +20,4 @@ app = FastAPI(
 app.include_router(base_routes.router)
 app.include_router(auth_routes.router)
 app.include_router(resource_routes.router)
+app.include_router(document_routes.router)

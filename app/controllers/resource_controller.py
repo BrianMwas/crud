@@ -29,8 +29,10 @@ class ResourceController:
         Returns:
             The created resource
         """
+        from ..auth.verify import get_effective_user_id
+
         # Get the user ID from the token
-        user_id = token_payload.get("sub")
+        user_id = get_effective_user_id(token_payload)
 
         # Create the resource
         db_resource = Resource(

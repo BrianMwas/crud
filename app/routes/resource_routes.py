@@ -16,11 +16,13 @@ router = APIRouter(
 
 @router.post("/", response_model=ResourceResponse, status_code=status.HTTP_201_CREATED)
 def create_resource(
-    resource: ResourceCreate, 
+    resource: ResourceCreate,
     db: Session = Depends(get_db),
     token_payload: dict = Depends(verify_token)
 ):
-    """Create a new resource. The current user will be set as the owner."""
+    """
+    Create a new resource. The current user will be set as the owner.
+    """
     return ResourceController.create_resource(resource, db, token_payload)
 
 @router.get("/", response_model=List[ResourceResponse])

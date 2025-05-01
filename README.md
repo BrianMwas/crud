@@ -53,10 +53,17 @@ This project demonstrates how to implement machine-to-machine (M2M) authenticati
 
    Or run individual tests:
    ```
-   python -m tests.test_auth
-   python -m tests.test_permissions
-   python -m tests.test_resource_controller
+   python -m tests.test_auth                    # Test authentication
+   python -m tests.test_permissions             # Test basic permissions
+   python -m tests.test_resource_controller     # Test CRUD operations
+   python -m tests.test_comprehensive_permissions # Test comprehensive permission scenarios
    ```
+
+   The comprehensive permission tests cover:
+   - Successful user access of an object they own
+   - Unsuccessful user access of an object they don't own
+   - Successful M2M access of multiple objects of the same model class
+   - Unsuccessful M2M access of objects from a different model class
 
 ## Project Structure
 
@@ -87,7 +94,8 @@ This project demonstrates how to implement machine-to-machine (M2M) authenticati
 │   ├── run_tests.py         # Main test runner
 │   ├── test_auth.py         # Authentication tests
 │   ├── test_permissions.py  # Permission system tests
-│   └── test_resource_controller.py # Resource controller tests
+│   ├── test_resource_controller.py # Resource controller tests
+│   └── test_comprehensive_permissions.py # Comprehensive permission scenarios
 ```
 
 ## API Endpoints

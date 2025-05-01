@@ -1,4 +1,4 @@
-import jwt
+import jwt as pyjwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import httpx
@@ -14,23 +14,42 @@ from ..models import Resource
 security = HTTPBearer()
 
 # Cache for the JWKS (JSON Web Key Set)
-jwks_cache = None
+m2m_jwks_cache = None
+web_jwks_cache = None
 
-async def get_jwks():
-    """Get the JSON Web Key Set from Auth0."""
-    global jwks_cache
+async def get_jwks(domain: str, is_web_app: bool = False):
+    """
+    Get the JSON Web Key Set from Auth0.
 
-    if jwks_cache is None:
-        url = f"https://{auth0_config.domain}/.well-known/jwks.json"
-        async with httpx.AsyncClient() as client:
-            response = await client.get(url)
-            jwks_cache = response.json()
+    Args:
+        domain: The Auth0 domain to get the JWKS from
+        is_web_app: Whether this is for the web application (True) or M2M application (False)
 
-    return jwks_cache
+    Returns:
+        The JWKS as a dictionary
+    """
+    global m2m_jwks_cache, web_jwks_cache
+
+    # Use the appropriate cache based on the application type
+    if is_web_app:
+        if web_jwks_cache is None:
+            url = f"https://{domain}/.well-known/jwks.json"
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url)
+                web_jwks_cache = response.json()
+        return web_jwks_cache
+    else:
+        if m2m_jwks_cache is None:
+            url = f"https://{domain}/.well-known/jwks.json"
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url)
+                m2m_jwks_cache = response.json()
+        return m2m_jwks_cache
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """
     Verify the JWT token from the Authorization header.
+    Handles tokens from both M2M and web applications.
 
     Args:
         credentials: The HTTP Authorization credentials containing the token
@@ -43,9 +62,21 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
     """
     token = credentials.credentials
 
+    # Try to decode the token without verification to determine which Auth0 application issued it
     try:
-        jwks = await get_jwks()
-        unverified_header = jwt.get_unverified_header(token)
+        # Decode the token without verification to get the issuer
+        unverified_payload = pyjwt.decode(token, options={"verify_signature": False})
+        unverified_header = pyjwt.get_unverified_header(token)
+
+        # Determine which Auth0 application issued the token based on the issuer
+        issuer = unverified_payload.get("iss", "")
+
+        # Check if this is a token from the web application
+        is_web_app = auth0_config.web_client_domain in issuer
+
+        # Get the appropriate domain and JWKS
+        domain = auth0_config.web_client_domain if is_web_app else auth0_config.domain
+        jwks = await get_jwks(domain, is_web_app)
 
         # Find the key that matches the key ID in the token header
         rsa_key = {}
@@ -67,13 +98,13 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Verify the token
+        # Verify the token with the appropriate issuer
         payload = jwt.decode(
             token,
-            rsa_key,
+            key=rsa_key,
             algorithms=auth0_config.algorithms,
             audience=auth0_config.api_audience,
-            issuer=f"https://{auth0_config.domain}/"
+            issuer=f"https://{domain}/"
         )
 
         return payload
@@ -90,6 +121,20 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
             detail=f"Invalid authentication credentials: {str(e)}",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+def get_effective_user_id(token_payload: dict) -> str:
+    """
+    Get the effective user ID from the token payload.
+    Uses the subject claim (sub) from the token.
+
+    Args:
+        token_payload: The decoded JWT token payload
+
+    Returns:
+        The effective user ID (subject claim)
+    """
+    # Use the subject claim as the user ID
+    return token_payload.get("sub")
 
 def has_model_permission(model_id: int, db: Session = Depends(get_db), token_payload: dict = Depends(verify_token)):
     """
@@ -130,8 +175,8 @@ def has_model_permission(model_id: int, db: Session = Depends(get_db), token_pay
             )
 
     # Check if user is the owner
-    # The user ID is usually stored in the 'sub' claim
-    user_id = token_payload.get("sub")
+    # Get the effective user ID (either the scoped user or the subject claim)
+    user_id = get_effective_user_id(token_payload)
     if resource.owner_id == user_id:
         return resource
 
@@ -154,12 +199,12 @@ def check_resource_permissions(db: Session, token_payload: dict):
     Returns:
         A query that will return only the resources the user has permission to access
     """
-    
+
     # Check if this is an M2M token (client credentials flow)
     if "gty" in token_payload and token_payload["gty"] == "client-credentials":
         # Check if the M2M app has the required permissions
         permissions = token_payload.get("permissions", [])
-        
+
         if "read:resources" in permissions:
             return db.query(Resource)
         else:
@@ -167,5 +212,6 @@ def check_resource_permissions(db: Session, token_payload: dict):
             return db.query(Resource).filter(Resource.id == -1)  # This will return no results
 
     # Regular users can only see their own resources
-    user_id = token_payload.get("sub")
+    # Get the effective user ID (either the scoped user or the subject claim)
+    user_id = get_effective_user_id(token_payload)
     return db.query(Resource).filter(Resource.owner_id == user_id)
