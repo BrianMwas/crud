@@ -22,42 +22,44 @@ async def login_user(username: str, password: str) -> Tuple[bool, Optional[Dict]
     conn = httpx.AsyncClient()
     try:
         payload = {
-            "client_id": auth0_config.web_client_id,
-            "client_secret": auth0_config.web_client_secret,
-            "username": username,
-            "password": password,
-            "grant_type": "password",
-            "scope": "openid profile email",
-            "audience": auth0_config.api_audience
-        }
-
-        print(f"Payload: {payload}")
-
+                "client_id": auth0_config.web_client_id,
+                "client_secret": auth0_config.web_client_secret,
+                "username": username,
+                "password": password,
+                "grant_type": "password",
+                "scope": "openid profile email",
+                "audience": auth0_config.api_audience,
+                "connection": "Username-Password-Authentication",
+                "realm": "Username-Password-Authentication"
+            }
+            
+        # Use web_client_domain as that's what you have in your config
         response = await conn.post(
             f"https://{auth0_config.web_client_domain}/oauth/token",
             json=payload
         )
-
+        
         if response.status_code != 200:
             return False, None, f"Login failed: {response.text}"
-
+            
         data = response.json()
         token = data.get("access_token")
-
+        
         # Decode token to get payload (without verification)
         # Note: In production, you would verify this properly
         parts = token.split(".")
         if len(parts) != 3:
             return False, None, "Invalid token format"
-
+            
         # Decode the payload (middle part)
         padded = parts[1] + "=" * (4 - len(parts[1]) % 4)
         decoded_bytes = base64.b64decode(padded)
         payload = json.loads(decoded_bytes.decode("utf-8"))
-
+        
         return True, payload, token
+        
     except Exception as e:
-        return False, None, f"Login request failed: {str(e)}"
+            return False, None, f"Login request failed: {str(e)}"
     finally:
         await conn.aclose()
 
